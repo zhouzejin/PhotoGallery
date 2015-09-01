@@ -3,12 +3,13 @@ package com.sunny.photogallery;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.net.Uri;
 import android.util.Log;
@@ -19,6 +20,15 @@ public class DoubanFetcher {
 	public static int BOOK_INDEX = 2023013;
 	
 	private static final String ENDPOINT = "http://api.douban.com/book/subject/";
+	
+	private static final String XML_TAG_TITLE = "title";
+	private static final String XML_TAG_ID = "id";
+	private static final String XML_TAG_LINK = "link";
+	
+	private static final String XML_ATTRIBUTE_HREF = "href";
+	private static final String XML_ATTRIBUTE_REL = "rel";
+	
+	private static final String XML_VALUE_IMAGE = "image";
 	
 	/*private static final String ENDPOINT = "http://api.flickr.com/services/rest/";
     private static final String API_KEY = "XXX";
@@ -58,8 +68,13 @@ public class DoubanFetcher {
 	public String getUrl(String urlSpec) throws IOException {
 		return new String(getUrlBytes(urlSpec));
 	}
-	
-	public void fetchItem(int index)	{
+	/**
+	 * 获取指定index的GalleryItem对象
+	 * @param index
+	 * @return
+	 */
+	public GalleryItem fetchItem(int index)	{
+		GalleryItem item = new GalleryItem();
 		try {
 			// http://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=XXX&extras=url_s
 			/*String url = Uri.parse(ENDPOINT).buildUpon()
@@ -68,17 +83,62 @@ public class DoubanFetcher {
 					.appendQueryParameter(PARAM_EXTRAS, EXTRA_SMALL_URL)
 					.build().toString();*/
 			
+			// 获取XML格式数据
 			String url = Uri.parse(ENDPOINT).buildUpon().toString() + index;
 			String xmlString = getUrl(url);
 			Log.i(TAG, "Received xml: " + xmlString);
-		} catch (Exception ioe) {
+			
+			// 将XML格式数据解析为GallerItem对象
+			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+			XmlPullParser parser = factory.newPullParser();
+			parser.setInput(new StringReader(xmlString));
+			
+			item = parseItem(parser);
+		} catch (IOException ioe) {
 			Log.e(TAG, "Failed to fetch item", ioe);
+		} catch (XmlPullParserException xppe) {
+			Log.e(TAG, "Failed to parse item", xppe);
 		}
+		return item;
 	}
 	
-	/*void parseItem(ArrayList<GalleryItem> items, XmlPullParser parser) 
+	/**
+	 * 解析XML格式数据
+	 * @param parser
+	 * @return
+	 * @throws XmlPullParserException
+	 * @throws IOException
+	 */
+	GalleryItem parseItem(XmlPullParser parser) 
 			throws XmlPullParserException, IOException {
+		GalleryItem item = new GalleryItem();
 		int eventType = parser.next();
-	}*/
+		
+		while (eventType != XmlPullParser.END_DOCUMENT) {
+			if (eventType == XmlPullParser.START_TAG && 
+					XML_TAG_TITLE.equals(parser.getName())) {
+				String caption = parser.nextText();
+				item.setCaption(caption);
+			}
+			if (eventType == XmlPullParser.START_TAG && 
+					XML_TAG_ID.equals(parser.getName())) {
+				String id = parser.nextText();
+				item.setId(id);
+			}
+			if (eventType == XmlPullParser.START_TAG && 
+					XML_TAG_LINK.equals(parser.getName())) {
+				String rel = parser.getAttributeValue(null, XML_ATTRIBUTE_REL);
+				if (XML_VALUE_IMAGE.equals(rel)) {
+					String url = parser.getAttributeValue(null, XML_ATTRIBUTE_HREF);
+					item.setUrl(url);
+				}
+			}
+			eventType = parser.next();
+		}
+		
+		Log.i(TAG, "Title:" + item.getCaption() + " Id:" + 
+				item.getId() + " Url:" + item.getUrl());
+		return item;
+	}
 
 }
