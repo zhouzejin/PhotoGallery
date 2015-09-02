@@ -2,8 +2,10 @@ package com.sunny.photogallery;
 
 import java.util.ArrayList;
 
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -12,15 +14,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
 
 public class PhotoGalleryFragment extends Fragment {
 	
-	public static int BOOK_NUM = 5;
+	public static int BOOK_NUM = 15;
 	
 	private static final String TAG = "PhotoGalleryFragment";
 	
 	GridView mGridView;
 	ArrayList<GalleryItem> mItems;
+	ThumbnailDownloader<ImageView> mThumbnailThread;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -28,6 +32,20 @@ public class PhotoGalleryFragment extends Fragment {
 		
 		setRetainInstance(true);
 		new FetchItemsTask().execute();
+		
+		mThumbnailThread = new ThumbnailDownloader<ImageView>(new Handler());
+		mThumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
+
+			@Override
+			public void onThumbnailDownloaded(ImageView token, Bitmap thumbnail) {
+				if (isVisible()) { // 保证不会将图片设置到无效的ImageView视图上去
+					token.setImageBitmap(thumbnail); // 为ImageView设置要显示的s图片
+				}
+			}
+		});
+		mThumbnailThread.start();
+		mThumbnailThread.getLooper();
+		Log.i(TAG, "Background thread started");
 	}
 
 	@Override
@@ -49,8 +67,9 @@ public class PhotoGalleryFragment extends Fragment {
 			return;
 		
 		if (mItems != null) {
-			mGridView.setAdapter(new ArrayAdapter<GalleryItem>(getActivity(), 
-					android.R.layout.simple_gallery_item, mItems));
+			/*mGridView.setAdapter(new ArrayAdapter<GalleryItem>(getActivity(), 
+					android.R.layout.simple_gallery_item, mItems));*/
+			mGridView.setAdapter(new GalleryItemAdapter(mItems));
 		} else {
 			mGridView.setAdapter(null);
 		}
@@ -84,6 +103,47 @@ public class PhotoGalleryFragment extends Fragment {
 			setupAdapter(); // 更新UI
 		}
 		
+	}
+	
+	private class GalleryItemAdapter extends ArrayAdapter<GalleryItem> {
+
+		public GalleryItemAdapter(ArrayList<GalleryItem> items) {
+			super(getActivity(), 0, items);
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			if (convertView == null) {
+				convertView = getActivity().getLayoutInflater()
+						.inflate(R.layout.gallery_item, parent, false);
+			}
+			
+			ImageView imageView = (ImageView) convertView
+					.findViewById(R.id.gallery_item_imageView);
+			imageView.setImageResource(R.drawable.brian_up_close);
+			
+			// 从网络上获取图片资源
+			GalleryItem item = getItem(position);
+			mThumbnailThread.queueThumbnail(imageView, item.getUrl());
+			
+			return convertView;
+		}
+		
+	}
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		
+		mThumbnailThread.clearQueue();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		
+		mThumbnailThread.quit();
+		Log.i(TAG, "Background thread destoryed");
 	}
 
 }
