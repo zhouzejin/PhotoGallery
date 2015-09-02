@@ -17,7 +17,7 @@ import android.util.Log;
 public class DoubanFetcher {
 	
 	public static final String TAG = "DoubanFetcher";
-	public static int BOOK_INDEX = 2023013;
+	public static int BOOK_INDEX = 2023009;
 	
 	private static final String ENDPOINT = "http://api.douban.com/book/subject/";
 	

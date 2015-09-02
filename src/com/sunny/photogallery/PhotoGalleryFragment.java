@@ -15,6 +15,8 @@ import android.widget.GridView;
 
 public class PhotoGalleryFragment extends Fragment {
 	
+	public static int BOOK_NUM = 5;
+	
 	private static final String TAG = "PhotoGalleryFragment";
 	
 	GridView mGridView;
@@ -64,7 +66,7 @@ public class PhotoGalleryFragment extends Fragment {
 		protected ArrayList<GalleryItem> doInBackground(Void... params) {
 			DoubanFetcher fetcher = new DoubanFetcher();
 			ArrayList<GalleryItem> items = new ArrayList<GalleryItem>();
-			for (int i = DoubanFetcher.BOOK_INDEX; i < 15; i++) {
+			for (int i = DoubanFetcher.BOOK_INDEX; i < DoubanFetcher.BOOK_INDEX + BOOK_NUM; i++) {
 				GalleryItem item = fetcher.fetchItem(i);
 				items.add(item);
 				Log.i(TAG, "BOOK_INDEX: " + i);
