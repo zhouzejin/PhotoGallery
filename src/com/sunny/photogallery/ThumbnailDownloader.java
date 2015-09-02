@@ -98,6 +98,7 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
 						return;
 					
 					requestMap.remove(token);
+					// 回调更新UI
 					mListener.onThumbnailDownloaded(token, bitmap);
 				}
 			});

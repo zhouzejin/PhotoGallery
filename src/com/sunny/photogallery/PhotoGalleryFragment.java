@@ -85,11 +85,12 @@ public class PhotoGalleryFragment extends Fragment {
 		protected ArrayList<GalleryItem> doInBackground(Void... params) {
 			DoubanFetcher fetcher = new DoubanFetcher();
 			ArrayList<GalleryItem> items = new ArrayList<GalleryItem>();
-			for (int i = DoubanFetcher.BOOK_INDEX; i < DoubanFetcher.BOOK_INDEX + BOOK_NUM; i++) {
+			/*for (int i = DoubanFetcher.BOOK_INDEX; i < DoubanFetcher.BOOK_INDEX + BOOK_NUM; i++) {
 				GalleryItem item = fetcher.fetchItem(i);
 				items.add(item);
 				Log.i(TAG, "BOOK_INDEX: " + i);
-			}
+			}*/
+			fetcher.search("java", "", 0, 3);
 			return items;
 		}
 

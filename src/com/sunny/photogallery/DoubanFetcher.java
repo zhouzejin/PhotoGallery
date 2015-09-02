@@ -6,7 +6,12 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -30,14 +35,27 @@ public class DoubanFetcher {
 	
 	private static final String XML_VALUE_IMAGE = "image";
 	
-	/*private static final String ENDPOINT = "http://api.flickr.com/services/rest/";
-    private static final String API_KEY = "XXX";
-    private static final String METHOD_GET_RECENT = "flickr.photos.getRecent";
-    private static final String PARAM_EXTRAS = "extras";
-
-    private static final String EXTRA_SMALL_URL = "url_s";
-
-    private static final String XML_PHOTO = "photo";*/
+	private static final String ENDPOINT_SEARCH = "https://api.douban.com/v2/book/search";
+	
+	/**
+	 * q和tag必传其一
+	 */
+	private static final String PARAM_Q = "q"; // 查询关键字
+	private static final String PARAM_TAG = "tag"; // 查询的tag
+	/**
+	 * 默认为0
+	 */
+	private static final String PARAM_START = "start"; // 取结果的offset
+	/**
+	 * 默认为20，最大为100
+	 */
+	private static final String PARAM_COUNT = "count"; // 取结果的条数
+	
+	private static final String JSON_KEY_BOOKS = "books";
+	private static final String JSON_KEY_TITLE = "title";
+	private static final String JSON_KEY_URL = "url";
+	private static final String JSON_KEY_IMAGES = "images";
+	private static final String JSON_KEY_LARGE = "large";
 	
 	byte[] getUrlBytes(String urlSpec) throws IOException {
 		URL url = new URL(urlSpec);
@@ -68,6 +86,7 @@ public class DoubanFetcher {
 	public String getUrl(String urlSpec) throws IOException {
 		return new String(getUrlBytes(urlSpec));
 	}
+	
 	/**
 	 * 获取指定index的GalleryItem对象
 	 * @param index
@@ -76,23 +95,15 @@ public class DoubanFetcher {
 	public GalleryItem fetchItem(int index)	{
 		GalleryItem item = new GalleryItem();
 		try {
-			// http://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=XXX&extras=url_s
-			/*String url = Uri.parse(ENDPOINT).buildUpon()
-					.appendQueryParameter("method", METHOD_GET_RECENT)
-					.appendQueryParameter("api_key", API_KEY)
-					.appendQueryParameter(PARAM_EXTRAS, EXTRA_SMALL_URL)
-					.build().toString();*/
-			
 			// 获取XML格式数据
 			String url = Uri.parse(ENDPOINT).buildUpon().toString() + index;
 			String xmlString = getUrl(url);
-			Log.i(TAG, "Received xml: " + xmlString);
+			// Log.i(TAG, "Received xml: " + xmlString);
 			
 			// 将XML格式数据解析为GallerItem对象
 			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
 			XmlPullParser parser = factory.newPullParser();
 			parser.setInput(new StringReader(xmlString));
-			
 			item = parseItem(parser);
 		} catch (IOException ioe) {
 			Log.e(TAG, "Failed to fetch item", ioe);
@@ -139,6 +150,75 @@ public class DoubanFetcher {
 		Log.i(TAG, "Title:" + item.getCaption() + " Id:" + 
 				item.getId() + " Url:" + item.getUrl());
 		return item;
+	}
+	
+	/**
+	 * 根据参数进行搜索
+	 * @param query
+	 * @param tag
+	 * @param start
+	 * @param count
+	 * @return
+	 */
+	public ArrayList<GalleryItem> search(String query, String tag, int start, int count) {
+		ArrayList<GalleryItem> items = new ArrayList<GalleryItem>();
+		try {
+			// https://api.douban.com/v2/book/search?q=java&tag=java&start=7&count=1
+			String url = Uri.parse(ENDPOINT_SEARCH).buildUpon()
+					.appendQueryParameter(PARAM_Q, query)
+					.appendQueryParameter(PARAM_TAG, tag)
+					.appendQueryParameter(PARAM_START, String.valueOf(start))
+					.appendQueryParameter(PARAM_COUNT, String.valueOf(count))
+					.build().toString();
+			Log.i(TAG, url);
+			
+			// 获取JSON格式数据
+			String jsonString = getUrl(url);
+			// Log.i(TAG, "Received json: " + jsonString);
+			
+			// 将JSON格式数据解析为GallerItem对象
+			items = parseJson(jsonString);
+		} catch (IOException ioe) {
+			Log.e(TAG, "Failed to search", ioe);
+		} catch (JSONException jsone) {
+			Log.e(TAG, "Failed to parse item", jsone);
+		}
+		return items;
+	}
+
+	/**
+	 * 解析JSON格式的数据
+	 * @param json
+	 * @return
+	 * @throws JSONException
+	 */
+	ArrayList<GalleryItem> parseJson(String json) throws JSONException {
+		ArrayList<GalleryItem> items = new ArrayList<GalleryItem>();
+		
+		JSONTokener jsonTokener = new JSONTokener(json);
+		JSONObject result = (JSONObject) jsonTokener.nextValue();
+		JSONArray books = result.getJSONArray(JSON_KEY_BOOKS);
+		
+		for (int i = 0; i < books.length(); i++) {
+			JSONObject book = books.getJSONObject(i);
+			// Log.i(TAG, "book" + i + ": " + book.toString());
+			
+			GalleryItem item = new GalleryItem();
+			String caption = book.getString(JSON_KEY_TITLE);
+			item.setCaption(caption);
+			String id = book.getString(JSON_KEY_URL);
+			item.setId(id);
+			JSONObject images = book.getJSONObject(JSON_KEY_IMAGES);
+			String url = images.getString(JSON_KEY_LARGE);
+			item.setUrl(url);
+			
+			items.add(item);
+			
+			Log.i(TAG, "Title:" + item.getCaption() + " Id:" + 
+					item.getId() + " Url:" + item.getUrl());
+		}
+		
+		return items;
 	}
 
 }
