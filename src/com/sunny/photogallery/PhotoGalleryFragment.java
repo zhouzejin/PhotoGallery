@@ -47,6 +47,12 @@ public class PhotoGalleryFragment extends Fragment {
 		
 		updateItems();
 		
+		// 启动服务
+		/*Intent intent = new Intent(getActivity(), PollService.class);
+		getActivity().startService(intent);*/
+		// 利用定时器延时运行服务
+		PollService.setServiceAlarm(getActivity(), true);
+		
 		mThumbnailThread = new ThumbnailDownloader<ImageView>(new Handler());
 		mThumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
 
@@ -114,7 +120,7 @@ public class PhotoGalleryFragment extends Fragment {
 			if (query != null) {
 				items = fetcher.search(query, "", 0, 5);
 			} else {
-				for (int i = DoubanFetcher.BOOK_INDEX; i < DoubanFetcher.BOOK_INDEX+ BOOK_NUM; i++) {
+				for (int i = DoubanFetcher.BOOK_INDEX; i < DoubanFetcher.BOOK_INDEX + BOOK_NUM; i++) {
 					GalleryItem item = fetcher.fetchItem(i);
 					items.add(item);
 					Log.i(TAG, "BOOK_INDEX: " + i);

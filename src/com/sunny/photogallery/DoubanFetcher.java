@@ -28,6 +28,7 @@ public class DoubanFetcher {
 	 * 使用shared preferences实现轻量级数据存储
 	 */
 	public static final String PREF_SEARCH_QUERY = "search_query";
+	public static final String PREF_LAST_RESULT_ID = "last_result_id"; // 存储最近一次获取图片的ID
 	
 	private static final String ENDPOINT = "http://api.douban.com/book/subject/";
 	
