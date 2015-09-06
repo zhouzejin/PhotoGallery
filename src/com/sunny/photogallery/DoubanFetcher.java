@@ -24,6 +24,11 @@ public class DoubanFetcher {
 	public static final String TAG = "DoubanFetcher";
 	public static int BOOK_INDEX = 2023009;
 	
+	/**
+	 * 使用shared preferences实现轻量级数据存储
+	 */
+	public static final String PREF_SEARCH_QUERY = "search_query";
+	
 	private static final String ENDPOINT = "http://api.douban.com/book/subject/";
 	
 	private static final String XML_TAG_TITLE = "title";
@@ -104,7 +109,7 @@ public class DoubanFetcher {
 			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
 			XmlPullParser parser = factory.newPullParser();
 			parser.setInput(new StringReader(xmlString));
-			item = parseItem(parser);
+			item = parseXml(parser);
 		} catch (IOException ioe) {
 			Log.e(TAG, "Failed to fetch item", ioe);
 		} catch (XmlPullParserException xppe) {
@@ -120,7 +125,7 @@ public class DoubanFetcher {
 	 * @throws XmlPullParserException
 	 * @throws IOException
 	 */
-	GalleryItem parseItem(XmlPullParser parser) 
+	GalleryItem parseXml(XmlPullParser parser) 
 			throws XmlPullParserException, IOException {
 		GalleryItem item = new GalleryItem();
 		int eventType = parser.next();

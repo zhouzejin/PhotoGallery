@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.sunny.photogallery.PhotoGalleryActivity" >
+
+    <!--
+        <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_settings"/>
+    -->
+
+	<!-- 
+		在菜单XML中指定操作视图(actionViewClass)，相当于告诉Android“不要在操作栏对此菜单项使用常规视图部件，
+		请使用指定的视图类。”通常，这也意味着连带获得了其他不同的行为。 （注意，只能在 在 Android 3.0 以后版本的设备上使用 SearchView）
+	-->
+    <item
+        android:id="@+id/menu_item_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:showAsAction="ifRoom"
+        android:title="@string/search"
+        android:actionViewClass="android.widget.SearchView" >
+    </item>
+    
+    <item
+        android:id="@+id/menu_item_clear"
+        android:icon="@android:drawable/ic_menu_close_clear_cancel"
+        android:showAsAction="ifRoom"
+        android:title="@string/clear_search" >
+    </item>
+
+</menu>
