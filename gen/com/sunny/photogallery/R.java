@@ -31,6 +31,7 @@ public final class R {
         public static final int gridView=0x7f090001;
         public static final int menu_item_clear=0x7f090004;
         public static final int menu_item_search=0x7f090003;
+        public static final int menu_item_toggle_polling=0x7f090005;
     }
     public static final class layout {
         public static final int activity_fragment=0x7f030000;
@@ -44,8 +45,16 @@ public final class R {
         public static final int action_settings=0x7f060001;
         public static final int app_name=0x7f060000;
         public static final int clear_search=0x7f060004;
+        public static final int new_pictures_text=0x7f060008;
+        /**  通知栏 
+         */
+        public static final int new_pictures_title=0x7f060007;
         public static final int search=0x7f060003;
+        /**  菜单 
+         */
         public static final int search_hint=0x7f060002;
+        public static final int start_polling=0x7f060005;
+        public static final int stop_polling=0x7f060006;
     }
     public static final class style {
         /** 

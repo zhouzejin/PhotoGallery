@@ -51,7 +51,7 @@ public class PhotoGalleryFragment extends Fragment {
 		/*Intent intent = new Intent(getActivity(), PollService.class);
 		getActivity().startService(intent);*/
 		// 利用定时器延时运行服务
-		PollService.setServiceAlarm(getActivity(), true);
+		// PollService.setServiceAlarm(getActivity(), true);
 		
 		mThumbnailThread = new ThumbnailDownloader<ImageView>(new Handler());
 		mThumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
@@ -214,6 +214,7 @@ public class PhotoGalleryFragment extends Fragment {
 		}
 	}
 
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -229,9 +230,38 @@ public class PhotoGalleryFragment extends Fragment {
 				.commit();
 			updateItems();
 			return true;
+			
+		// 实现启动或关闭服务。
+		case R.id.menu_item_toggle_polling:
+			boolean shouldStartAlarm = !PollService.isServiceAlarmOn(getActivity());
+			PollService.setServiceAlarm(getActivity(), shouldStartAlarm);
+			
+			// 更新菜单状态
+			getActivity().invalidateOptionsMenu();
+			
+			return true;
 
 		default:
 			return super.onOptionsItemSelected(item);
+		}
+	}
+
+	/**
+	 * 在3.0以前版本的设备中，每次显示菜单时都会调用该方法，而在3.0以后版本的设备中，以上做法就不行了。
+	 * 操作栏无法自动更新自己，因此，需通过Activity.invalidateOptionsMenu()方法回调
+	 * onPrepareOptionsMenu(Menu)方法并刷新菜单项（在onOptionsItemSelected中实现）。
+	 */
+	@Override
+	public void onPrepareOptionsMenu(Menu menu) {
+		// 除了菜单的首次创建外，每次菜单需要配置都会调用该方法。
+		// 因此，可以在该方法中更新选项菜单，以反映应用的状态。
+		super.onPrepareOptionsMenu(menu);
+		
+		MenuItem toggleItem = menu.findItem(R.id.menu_item_toggle_polling);
+		if (PollService.isServiceAlarmOn(getActivity())) {
+			toggleItem.setTitle(R.string.stop_polling);
+		} else {
+			toggleItem.setTitle(R.string.start_polling);
 		}
 	}
 

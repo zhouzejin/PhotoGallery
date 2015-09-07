@@ -4,25 +4,34 @@ import java.util.ArrayList;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class PollService extends IntentService {
 	
+	public static final String PREF_IS_ALARM_ON = "is_alarm_on";
+	public static final String ACTION_SHOW_NOTIFICATION = 
+			"com.sunny.photogallery.SHOW_NOTIFICATION";
+	
 	private static final String TAG = "PollService";
 	
-	private static final int POLL_INTERVAL = 1000 * 15; // 15 seconds
+	private static final int POLL_INTERVAL = 1000 * 60 * 1; // 1 minute
 	
 	public static void setServiceAlarm(Context context, boolean isOn) {
 		Intent intent = new Intent(context, PollService.class);
 		PendingIntent pendingIntent = PendingIntent
 				.getService(context, 0, intent, 0);
 		
+		// 利用定时器间断性地启动服务
 		AlarmManager alarmManager = (AlarmManager) 
 				context.getSystemService(Context.ALARM_SERVICE);
 		
@@ -33,6 +42,19 @@ public class PollService extends IntentService {
 			alarmManager.cancel(pendingIntent);
 			pendingIntent.cancel();
 		}
+		
+		// 添加定时器状态preference
+		PreferenceManager.getDefaultSharedPreferences(context)
+			.edit()
+			.putBoolean(PREF_IS_ALARM_ON, isOn)
+			.commit();
+	}
+	
+	public static boolean isServiceAlarmOn(Context context) {
+		Intent intent = new Intent(context, PollService.class);
+		PendingIntent pi = PendingIntent.getService(
+				context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+		return pi != null;
 	}
 	
 	public PollService() {
@@ -76,6 +98,27 @@ public class PollService extends IntentService {
 		String resultId = items.get(0).getId();
 		if (!resultId.equals(lastResultID)) {
 			Log.i(TAG, "Got a new result: " + resultId);
+			
+			// 使用通知信息（notification） 实现让PollService通知新结果信息给用户。
+			Resources resources = getResources();
+			PendingIntent pi = PendingIntent
+					.getActivity(this, 0, new Intent(this, PhotoGalleryActivity.class), 0);
+			
+			Notification notification = new NotificationCompat.Builder(this)
+				.setTicker(resources.getString(R.string.new_pictures_title))
+				.setSmallIcon(android.R.drawable.ic_menu_report_image)
+				.setContentTitle(resources.getString(R.string.new_pictures_title))
+				.setContentText(resources.getString(R.string.new_pictures_text))
+				.setContentIntent(pi)
+				.setAutoCancel(true)
+				.build();
+			
+			NotificationManager notificationManager = (NotificationManager) 
+					getSystemService(NOTIFICATION_SERVICE);
+			notificationManager.notify(0, notification);
+			
+			// 发生显示通知的广播
+			sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
 		} else {
 			Log.i(TAG, "Got a old result: " + resultId);
 		}
