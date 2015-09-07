@@ -14,6 +14,11 @@ public class GalleryItem {
 	 * <link href="http://img4.douban.com/spic/s9097939.jpg" rel="image"/>
 	 */
 	private String mUrl;
+	/**
+	 * XML: <link href="http://m.douban.com/book/subject/1003078/" rel="mobile"/>
+	 * JSON: "alt":"http:\\book.douban.com\subject\1003078\",
+	 */
+	private String mWebPage;
 
 	public String getCaption() {
 		return mCaption;
@@ -37,6 +42,14 @@ public class GalleryItem {
 
 	public void setUrl(String url) {
 		mUrl = url;
+	}
+
+	public String getWebPage() {
+		return mWebPage;
+	}
+
+	public void setWebPage(String webPage) {
+		mWebPage = webPage;
 	}
 
 	@Override

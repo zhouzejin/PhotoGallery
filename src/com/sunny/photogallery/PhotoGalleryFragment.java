@@ -8,7 +8,9 @@ import android.app.SearchManager;
 import android.app.SearchableInfo;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -81,6 +84,24 @@ public class PhotoGalleryFragment extends VisibleFragment {
 		// 重新生成GridView视图时，可重新为其配置对应的adapter。
 		// 另外，每次模型层对象发生改变时，也应保证该方法的及时调用。
 		setupAdapter();
+		
+		mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				GalleryItem item = mItems.get(position);
+				
+				Uri webPageUri = Uri.parse(item.getWebPage());
+				// 使用隐式intent通过内置浏览器实现网页浏览
+				// Intent intent = new Intent(Intent.ACTION_VIEW, webPageUri);
+				// 使用显示intent通过WebView实现网页浏览
+				Intent intent = new Intent(getActivity(), PhotoPageActivity.class);
+				intent.setData(webPageUri);
+				
+				startActivity(intent);
+			}
+		});
 		
 		return view;
 	}

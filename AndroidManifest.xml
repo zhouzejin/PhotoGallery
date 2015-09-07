@@ -39,6 +39,14 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
+        <!-- 
+        	android:configChanges属性表明，如果因键盘开关、屏幕方向改变、屏幕大小改变
+        	（也包括Android 3.2之后的屏幕方向变化）而发生设备配置更改，那么activity应自己处理配置更改。 
+        	这样可以使得在屏幕旋转时，WebView不必重新加载网页。
+        -->
+        <activity 
+            android:name=".PhotoPageActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <service android:name=".PollService" ></service>
         

@@ -40,6 +40,7 @@ public class DoubanFetcher {
 	private static final String XML_ATTRIBUTE_REL = "rel";
 	
 	private static final String XML_VALUE_IMAGE = "image";
+	private static final String XML_VALUE_MOBILE = "mobile";
 	
 	private static final String ENDPOINT_SEARCH = "https://api.douban.com/v2/book/search";
 	
@@ -62,6 +63,7 @@ public class DoubanFetcher {
 	private static final String JSON_KEY_URL = "url";
 	private static final String JSON_KEY_IMAGES = "images";
 	private static final String JSON_KEY_LARGE = "large";
+	private static final String JSON_KEY_ALT = "alt";
 	
 	byte[] getUrlBytes(String urlSpec) throws IOException {
 		URL url = new URL(urlSpec);
@@ -150,11 +152,19 @@ public class DoubanFetcher {
 					item.setUrl(url);
 				}
 			}
+			if (eventType == XmlPullParser.START_TAG && 
+					XML_TAG_LINK.equals(parser.getName())) {
+				String rel = parser.getAttributeValue(null, XML_ATTRIBUTE_REL);
+				if (XML_VALUE_MOBILE.equals(rel)) {
+					String webPage = parser.getAttributeValue(null, XML_ATTRIBUTE_HREF);
+					item.setWebPage(webPage);
+				}
+			}
 			eventType = parser.next();
 		}
 		
 		Log.i(TAG, "Title:" + item.getCaption() + " Id:" + 
-				item.getId() + " Url:" + item.getUrl());
+				item.getId() + " Url:" + item.getUrl() + " WebPage:" + item.getWebPage());
 		return item;
 	}
 	
@@ -217,11 +227,13 @@ public class DoubanFetcher {
 			JSONObject images = book.getJSONObject(JSON_KEY_IMAGES);
 			String url = images.getString(JSON_KEY_LARGE);
 			item.setUrl(url);
+			String webPage = book.getString(JSON_KEY_ALT);
+			item.setWebPage(webPage);
 			
 			items.add(item);
 			
 			Log.i(TAG, "Title:" + item.getCaption() + " Id:" + 
-					item.getId() + " Url:" + item.getUrl());
+					item.getId() + " Url:" + item.getUrl() + " WebPage:" + item.getWebPage());
 		}
 		
 		return items;
