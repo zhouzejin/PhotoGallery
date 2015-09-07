@@ -2,6 +2,7 @@ package com.sunny.photogallery;
 
 import java.util.ArrayList;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -21,6 +22,8 @@ public class PollService extends IntentService {
 	public static final String PREF_IS_ALARM_ON = "is_alarm_on";
 	public static final String ACTION_SHOW_NOTIFICATION = 
 			"com.sunny.photogallery.SHOW_NOTIFICATION";
+	public static final String PREM_PRIVATE = 
+			"com.sunny.photogallery.PRIVATE";
 	
 	private static final String TAG = "PollService";
 	
@@ -113,12 +116,16 @@ public class PollService extends IntentService {
 				.setAutoCancel(true)
 				.build();
 			
-			NotificationManager notificationManager = (NotificationManager) 
+			/*NotificationManager notificationManager = (NotificationManager) 
 					getSystemService(NOTIFICATION_SERVICE);
-			notificationManager.notify(0, notification);
+			notificationManager.notify(0, notification);*/
 			
 			// 发生显示通知的广播
-			sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
+			// sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
+			// 发送带权限的广播，只有具有该权限的应用才能收到该广播
+			// sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
+			// 通过发送带权限的有序广播来推送通知，从而去过滤通知
+			showBackgroundNotification(0, notification);
 		} else {
 			Log.i(TAG, "Got a old result: " + resultId);
 		}
@@ -126,6 +133,24 @@ public class PollService extends IntentService {
 		prefs.edit()
 			.putString(DoubanFetcher.PREF_LAST_RESULT_ID, resultId)
 			.commit();
+	}
+	
+	/**
+	 * 为让能够取消通知， broadcast必须有序。
+	 * 该方法打包一个Notification调用，然后作为一个broadcast发出。
+	 * 只要通知信息还没被撤消，可指定一个result receiver发出打包的Notification。
+	 * 
+	 * @param requestCode
+	 * @param notification
+	 */
+	void showBackgroundNotification(int requestCode, Notification notification) {
+		Intent intent = new Intent(ACTION_SHOW_NOTIFICATION);
+		intent.putExtra("REQUEST_CODE", requestCode);
+		intent.putExtra("NOTIFICATION", notification);
+		
+		// 发送有序广播
+		sendOrderedBroadcast(intent, PREM_PRIVATE, null, null, Activity.RESULT_OK, 
+				null, null);
 	}
 
 }
